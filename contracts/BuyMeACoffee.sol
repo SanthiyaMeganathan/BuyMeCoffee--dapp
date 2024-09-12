@@ -1,64 +1,72 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 contract BuyMeACoffee {
-    //event emit when the memo is created
-    event Newmemo(
+    // Event to emit when a Memo is created.
+    event NewMemo(
         address indexed from,
         uint256 timestamp,
         string name,
         string message
     );
 
-    //Memo struct
-
+    // Memo struct.
     struct Memo {
         address from;
         uint256 timestamp;
         string name;
         string message;
     }
-    //list of all memos received from friends.
 
-    //list of structs
-
-    Memo[] memos;
-
-    //address of contract deployer.abi
+    // Address of contract deployer. Marked payable so that
+    // we can withdraw to this address later.
     address payable owner;
 
-    //constructore
-    //there will be only one constructor which will be deployed only one.abi
+    // List of all memos received from coffee purchases.
+    Memo[] memos;
+
     constructor() {
+        // Store the address of the deployer as a payable address.
+        // When we withdraw funds, we'll withdraw here.
         owner = payable(msg.sender);
     }
 
-
-    //buycoffee function to buy a cofeee
-
-    /*
-    @dev buy a coffee for the contract owner
-    @param _name name of the coffee  buyer 
-    @param _message a nice message from the coffee buyer
+    /**
+     * @dev fetches all stored memos
      */
-
-    function buyCoffee(string memory _name, string memory _message) public payable {
-        //if you want to buy a coffee yo should pay more than 0 eth
-
-        require(msg.value>0,"can not buy a coffee with 0 eth ")
-
-      //here we are creating the memos using the struct template and pushing all the memos into the list that we craeted memos.abi
-      
-       memos( Memo(
-            msg.sender,
-            block.timestamp,
-            _name,
-            _message
-        ));
+    function getMemos() public view returns (Memo[] memory) {
+        return memos;
     }
 
+    /**
+     * @dev buy a coffee for owner (sends an ETH tip and leaves a memo)
+     * @param _name name of the coffee purchaser
+     * @param _message a nice message from the purchaser
+     */
+    function buyCoffee(
+        string memory _name,
+        string memory _message
+    ) public payable {
+        // Must accept more than 0 ETH for a coffee.
+        require(msg.value > 0, "can't buy coffee for free!");
 
+        // Add the memo to storage!
+        memos.push(Memo(msg.sender, block.timestamp, _name, _message));
+
+        // Emit a NewMemo event with details about the memo.
+        emit NewMemo(msg.sender, block.timestamp, _name, _message);
+    }
+
+    /**
+     * @dev send the entire balance stored in this contract to the owner
+     */
+    function withdrawTips() public {
+        require(owner.send(address(this).balance));
+    }
+
+    //get the all memos store in smart contract
+
+    function getMemo() public view returns (Memo[] memory) {
+        return memos;
+    }
 }
