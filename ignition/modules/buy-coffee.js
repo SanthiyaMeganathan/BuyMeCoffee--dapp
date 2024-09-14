@@ -36,22 +36,22 @@ async function main() {
   const BuyMeACoffee = await hre.ethers.getContractFactory("BuyMeACoffee");
   const buyMeACoffee = await BuyMeACoffee.deploy();
 
-  // Deploy the contract.
-  // await buyMeACoffee.waitForDeployment();
-  console.log("BuyMeACoffee deployed to:", buyMeACoffee.address);
+  // Wait for deployment
+  await buyMeACoffee.waitForDeployment();
+
+  // Get contract address correctly in ethers v6
+  const contractAddress = await buyMeACoffee.getAddress();
+  console.log("BuyMeACoffee deployed to:", contractAddress);
 
   // Check balances before the coffee purchase.
-  const addresses = [owner.address, tipper.address, buyMeACoffee.address];
-  // console.log("Owner address:", owner.address);
-  // console.log("Tipper address:", tipper.address);
-  // console.log("Tipper2 address:", tipper2.address);
-
+  const addresses = [owner.address, tipper.address, contractAddress];
   console.log("== start ==");
   await printBalances(addresses);
 
   // Buy the owner a few coffees.
   const tip = { value: hre.ethers.parseEther("1") };
   await buyMeACoffee
+    //connecting to our smart contract using the instance
     .connect(tipper)
     .buyCoffee("Carolina", "You're the best!", tip);
   await buyMeACoffee
@@ -61,14 +61,14 @@ async function main() {
     .connect(tipper3)
     .buyCoffee("Kay", "I love my Proof of Knowledge", tip);
 
-  //   // Check balances after the coffee purchase.
+  // Check balances after the coffee purchase.
   console.log("== bought coffee ==");
   await printBalances(addresses);
 
-  //   // Withdraw.
+  // Withdraw tips.
   await buyMeACoffee.connect(owner).withdrawTips();
 
-  //   // Check balances after withdrawal.
+  // Check balances after withdrawal.
   console.log("== withdrawTips ==");
   await printBalances(addresses);
 
